@@ -1,0 +1,40 @@
+services:
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    restart: always
+    depends_on: 
+      - tomcat 
+    ports:
+      - "1080:80"
+      - "10443:443"
+    # volumes:
+    # - $HOME/Tomcat/nginx:/etc/nginx
+    
+  tomcat:
+    image: 'tomcat:7.0.109-jdk8-openjdk-buster'
+    build:
+      context: .
+      dockerfile: Dockerfile-tomcat
+    container_name: tomcat
+    restart: always
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - CATALINA_OPTS=-Xms512m -Xmx1024m -XX:PermSize=128m -XX:MaxPermSize=256m
+      - JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom
+      - CATALINA_HOME=/usr/local/tomcat
+    secrets:
+      - tomcat_secrets
+    volumes:
+      - $HOME/Tomcat/config_generator.sh:/usr/local/tomcat/config_generator.sh:ro
+    # - $HOME/Tomcat/tomcat/conf/server.xml:/usr/local/tomcat/conf/server.xml
+    # - $HOME/Tomcat/tomcat/conf/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
+    # - $HOME/Tomcat/tomcat/ROOT:/usr/local/tomcat/webapps/ROOT
+    command: ["/bin/bash", "-c", "/usr/local/tomcat/config_generator.sh"]
+
+secrets:
+  tomcat_secrets:
+    file: $HOME/Tomcat/tomcat/secrets/tomcat_secrets.yml
